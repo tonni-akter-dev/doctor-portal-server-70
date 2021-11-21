@@ -4,9 +4,13 @@ const cors = require("cors");
 const port = process.env.PORT || 4000;
 app.use(cors());
 const ObjectId = require("mongodb").ObjectId;
+const stripe = require("stripe")(
+  "sk_test_51Jy7YXC5ed92CpsqNoC1rWOppPiYSR9cGc4JIOMVhTtxzgJUhnpdG6nhm6Ffp9EcDV6rOtvfZv4oBLtdcSQOII3400A5i7f0Qs"
+);
 app.use(express.json());
 // Oe7okArjjreUnwn6
 // Doctors-portal
+
 const { MongoClient } = require("mongodb");
 const uri =
   "mongodb+srv://Doctors-portal:Oe7okArjjreUnwn6@cluster0.qtpo1.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
@@ -39,6 +43,17 @@ async function run() {
       const query = { email: email, date: date };
       const cursor = appointmentCollection.find(query);
       const result = await cursor.toArray();
+      res.json(result);
+    });
+    app.put("/appointments/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          payment: payment,
+        },
+      };
+      const result = await appointmentCollection.updateOne(filter, updateDoc);
       res.json(result);
     });
 
@@ -86,12 +101,19 @@ async function run() {
       const result = await appointmentCollection.findOne(query);
       res.json(result);
     });
-// payment
-
-
-
-
-
+    // payment
+    app.post("/create-payment-intent", async (req, res) => {
+      const paymentInfo = req.body;
+      const amount = paymentInfo.price * 100;
+      const paymentIntent = await stripe.paymentIntents.create({
+        currency: "usd",
+        amount: amount,
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
   } finally {
     //   await client.close();
   }
