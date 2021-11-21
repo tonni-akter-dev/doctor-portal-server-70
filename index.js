@@ -3,6 +3,7 @@ const app = express();
 const cors = require("cors");
 const port = process.env.PORT || 4000;
 app.use(cors());
+const ObjectId = require("mongodb").ObjectId;
 app.use(express.json());
 // Oe7okArjjreUnwn6
 // Doctors-portal
@@ -28,9 +29,7 @@ async function run() {
     // insert one
     app.post("/appointments", async (req, res) => {
       const appointments = req.body;
-      console.log(appointments);
       const result = await appointmentCollection.insertOne(appointments);
-      console.log(result);
       res.json(result);
     });
     // get the appointments
@@ -59,7 +58,7 @@ async function run() {
     app.put("/users/admin", async (req, res) => {
       const user = req.body;
       const filter = { email: user.email };
-      const updateDoc = { $set: { role: 'admin' } };
+      const updateDoc = { $set: { role: "admin" } };
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.json(result);
     });
@@ -74,13 +73,25 @@ async function run() {
       const email = req.params.email;
       const query = { email: email };
       const user = await usersCollection.findOne(query);
-      console.log(user);
       let isAdmin = false;
-      if (user.role === 'admin') {
+      if (user?.role === "admin") {
         isAdmin = true;
       }
       res.json({ admin: isAdmin });
     });
+
+    app.get("/appointments/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await appointmentCollection.findOne(query);
+      res.json(result);
+    });
+// payment
+
+
+
+
+
   } finally {
     //   await client.close();
   }
